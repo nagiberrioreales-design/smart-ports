@@ -1,0 +1,30 @@
+SMART PORTS v0.7 - CLOUD MULTIUSUARIO
+
+Esta versión está preparada para que varias personas accedan desde
+Internet y compartan exactamente la misma información.
+
+NOVEDADES
+- Soporte para PostgreSQL Cloud mediante DATABASE_URL.
+- SSL para bases administradas.
+- Compatible todavía con PostgreSQL local para desarrollo.
+- Configuración de despliegue para Render.
+- Health check conectado realmente a PostgreSQL.
+- Variables de entorno separadas para local y cloud.
+- Script opcional para migrar datos de PostgreSQL local a cloud.
+- Gitignore para evitar subir contraseñas.
+
+ARCHIVOS IMPORTANTES
+- GUIA-PUBLICAR-V0.7.txt
+- render.yaml
+- backend/.env.cloud.example
+- backend/.env.migration.example
+- PROBAR-CONEXION-CLOUD.bat
+- MIGRAR-DATOS-LOCALES-A-CLOUD.bat
+
+SIGUIENTE PASO
+No debes ejecutar una nueva versión local todavía.
+
+Primero crea la base PostgreSQL Cloud y consigue DATABASE_URL.
+Después seguimos con la publicación del backend y frontend.
+
+NO COMPARTAS DATABASE_URL NI TU CONTRASEÑA DE POSTGRESQL.

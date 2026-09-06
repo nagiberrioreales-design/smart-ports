@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Ports v0.5</title>
+<style>
+:root{
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#edf7ff;background:#061019;
+  --bg:#061019;--panel:#091924;--panel2:#0c2230;--line:#15354a;
+  --blue:#199bf0;--muted:#849dae;--green:#4bd69a;--red:#ff6a70;--yellow:#f0b644
+}
+*{box-sizing:border-box}
+body{margin:0;min-width:320px;min-height:100vh;background:var(--bg)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.primary{border:0;border-radius:10px;padding:12px 18px;color:#fff;font-weight:800;background:linear-gradient(135deg,#0875e5,#175ee6)}
+.primary.small{padding:8px 12px;font-size:13px}
+.ghost{border:1px solid #24465d;background:#0b1e2c;color:#dceaf3;border-radius:9px;padding:10px 14px}
+.dangerBtn{border:1px solid #6b3035;background:#35191d;color:#ffc5c8;border-radius:8px;padding:7px 10px}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#53bff7}
+.muted{color:var(--muted)}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;background:#0e3550;color:#74cafa}
+.status-active{background:#123428;color:#6adca9}
+.status-maint{background:#3b2615;color:#f7bd63}
+.status-danger{background:#3a1d22;color:#ff8990}
+
+/* Landing */
+#landing{min-height:100vh;display:grid;place-items:center;background-image:linear-gradient(90deg,rgba(2,10,17,.94),rgba(2,10,17,.58),rgba(2,10,17,.26)),url("port-bg.png");background-size:cover;background-position:center}
+.hero{width:min(1120px,92%);display:flex;align-items:center;gap:42px;padding:52px}
+.logoBox{width:155px;height:155px;display:grid;place-items:center;border-radius:28px;border:1px solid #42b9f4;background:rgba(5,31,49,.78);font-size:82px}
+.hero h1{font-size:clamp(54px,8vw,92px);line-height:.95;letter-spacing:-.04em;margin:8px 0 14px}
+.hero .sub{font-size:clamp(20px,2.5vw,28px);max-width:720px}.hero .motto{color:#37b0f3;font-size:18px;margin:24px 0 28px}
+
+/* Login */
+#login{min-height:100vh;display:grid;place-items:center;padding:25px;background:radial-gradient(circle at 20% 15%,rgba(30,153,220,.18),transparent 26%),linear-gradient(135deg,#06101a,#091c29)}
+.loginCard{width:min(430px,94vw);padding:32px;border:1px solid #17384d;background:#091823;border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.4)}
+.loginIcon{width:65px;height:65px;border-radius:16px;background:#087be5;display:grid;place-items:center;font-size:34px;margin-bottom:18px}
+.loginCard h2{margin:0 0 7px}.loginCard p{color:#8ca5b7}
+label{display:grid;gap:7px;margin-top:13px;color:#bfd0db;font-size:14px;font-weight:650}
+input,select{width:100%;border:1px solid #24465d;border-radius:9px;padding:11px 12px;color:#f0f8fc;background:#07131d;outline:none}
+input:focus,select:focus{border-color:#239de7;box-shadow:0 0 0 3px rgba(35,157,231,.12)}
+.back{border:0;background:transparent;color:#6bc6f6;padding:0;margin-bottom:20px}
+.error{margin-top:12px;padding:10px;background:#35181b;border:1px solid #6a3337;border-radius:8px;color:#ffbaba}
+.demo{margin-top:16px;padding:11px;background:#0b2230;border:1px solid #173c55;border-radius:8px;color:#91acc0;font-size:13px}
+
+/* App */
+#app{min-height:100vh;display:grid;grid-template-columns:230px minmax(0,1fr)}
+aside{background:#081722;border-right:1px solid #153247;padding:20px 13px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:8px 9px 24px;color:#56c1fc;font-weight:900}.brand span{color:#fff;margin-left:4px}.version{font-size:10px;color:#607e91;margin-left:9px;margin-top:-18px;margin-bottom:18px}
+nav{display:grid;gap:6px}
+nav button{border:0;text-align:left;padding:11px 12px;border-radius:8px;color:#8fa7b9;background:transparent}
+nav button:hover,nav button.active{color:#fff;background:#0d2a40}
+.userBox{margin-top:auto;border-top:1px solid #173348;padding:14px 8px 3px;display:grid;gap:3px}.userBox small{color:#7992a5}.userBox button{margin-top:8px;border:0;background:transparent;color:#5fb8ed;text-align:left;padding:0}
+main.workspace{padding:22px;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px}.topbar h2{margin:4px 0 0;font-size:28px}
+.topActions{display:flex;align-items:center;gap:10px}.live{display:inline-flex;align-items:center;border:1px solid #174535;background:#0b2a22;color:#52d499;border-radius:999px;padding:7px 10px;font-size:12px}
+.notice,.connectionError{padding:11px 13px;border-radius:9px;margin-bottom:14px}
+.notice{border:1px solid #1c6a50;background:#0b2d25;color:#a6ebce}
+.connectionError{background:#3b1c1f;border:1px solid #743238;color:#ffc3c6}
+.pageToolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.pageToolbar h3{margin:0}.toolbarActions{display:flex;gap:8px;align-items:center}
+.metrics{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px}.card,.panel{border:1px solid var(--line);background:var(--panel);border-radius:12px}
+.card{padding:15px}.card span{display:block;color:#819aac;font-size:11px;text-transform:uppercase}.card strong{display:block;font-size:27px;margin:7px 0 3px}.card small{color:#4fce91}
+.grid{display:grid;grid-template-columns:2fr .9fr;gap:14px;margin-top:14px}.bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.panel{padding:16px}.panelHeader{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.panel h3{margin:4px 0 0}
+.portMap{min-height:360px;position:relative;overflow:hidden;border-radius:10px;background:radial-gradient(circle at 30% 38%,rgba(12,137,184,.34),transparent 24%),linear-gradient(155deg,#0c4053 0 46%,#142b34 46% 66%,#081821 66%)}
+.portMap:before{content:"";position:absolute;left:-10%;right:-10%;top:50%;height:4px;background:rgba(68,198,255,.45);transform:rotate(-14deg)}
+.dock{position:absolute;background:#0c8ade;border:1px solid #64c5fc;border-radius:7px;padding:7px 10px;font-size:12px;font-weight:900}.d1{left:18%;top:36%}.d2{left:54%;top:25%}.d3{right:14%;bottom:28%}
+.ship{position:absolute;font-size:34px}.s1{left:25%;bottom:20%}.s2{right:22%;top:37%}
+.yardMarker{position:absolute;right:26%;bottom:8%;background:#162831;border:1px solid #d69e34;border-radius:8px;padding:8px 11px;font-size:11px}.yardMarker strong{font-size:18px;color:#f4b540}.yardMarker.y2{right:5%;border-color:#d95252}.yardMarker.y2 strong{color:#ff7070}
+.arrivals{display:grid;gap:8px}.arrival{display:flex;justify-content:space-between;gap:12px;padding:11px;border-radius:8px;background:#0c2230}.arrival small{display:block;color:#718da1;margin-top:3px}.arrivalMeta{text-align:right}.arrivalMeta strong{color:#59beef}.arrivalMeta span{display:block;color:#9eb1bd;font-size:12px}
+.alert{margin-top:9px;padding:11px 12px;border-radius:8px;background:#0c202c;border-left:4px solid #44738e}.warning{border-left-color:#de9d2e}.danger{border-left-color:#d95252}.success{border-left-color:#36b779}
+.progress{margin-top:14px;color:#a7bdca;font-size:13px}.bar{height:8px;margin-top:7px;background:#102b3c;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#0876df,#30b9f6)}
+.tableWrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:13px 10px;border-bottom:1px solid #153449}th{font-size:11px;color:#7792a4;text-transform:uppercase}td{color:#c9d9e3}
+.empty{padding:30px;text-align:center;color:#7992a5}
+.cardsGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.resourceCard{border:1px solid #17394f;background:#0b1e2b;border-radius:11px;padding:15px}.resourceCard h4{margin:0 0 7px}.resourceCard p{margin:4px 0;color:#8fa7b9}.resourceCard .row{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px}
+.yardBar{height:10px;border-radius:999px;background:#102d3f;overflow:hidden;margin-top:10px}.yardBar i{display:block;height:100%;background:linear-gradient(90deg,#1488e9,#36bcf2)}
+.inlineForm{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:10px;align-items:end;margin-bottom:16px}.inlineForm label{margin:0}.inlineForm .formButton{align-self:end}
+.alertRow{display:grid;grid-template-columns:100px 1fr 130px;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #153449}.alertRow:last-child{border-bottom:0}
+.placeholder{padding:50px 20px;text-align:center;border:1px dashed #24465d;border-radius:12px;color:#7f9aac}
+
+/* Modal */
+#modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
+.modalCard{width:min(540px,96vw);background:#091924;border:1px solid #1b4057;border-radius:16px;padding:20px}
+.modalHead{display:flex;justify-content:space-between;align-items:start}.close{border:1px solid #23445b;background:#0b1e2c;color:#fff;border-radius:8px;width:36px;height:36px;font-size:22px}
+.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.formGrid label:first-child,.formGrid label:last-of-type{grid-column:1/-1}.actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:9px;margin-top:8px}
+
+
+.analyticsSummary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.chartGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.chartPanel{min-height:270px}
+.chartBars{display:grid;gap:12px;margin-top:14px}.chartRow{display:grid;grid-template-columns:150px 1fr 55px;gap:10px;align-items:center}.chartLabel{color:#b8ccd8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chartTrack{height:13px;border-radius:999px;background:#102c3d;overflow:hidden}.chartTrack i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#0f77df,#37c1f3)}.chartValue{text-align:right;color:#6fcfff;font-weight:800}
+.reportGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.reportCard{border:1px solid #17394f;background:#0b1e2b;border-radius:12px;padding:18px}.reportCard h4{margin:0 0 8px}.reportCard p{color:#839dad;min-height:42px}.reportCard .primary{width:100%;margin-top:8px}
+.optimizationLayout{display:grid;grid-template-columns:320px 1fr;gap:14px}.riskCard{text-align:center}.riskScore{width:180px;height:180px;margin:18px auto;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#2fbaf2 var(--risk,0%),#102b3c 0);position:relative}.riskScore:after{content:"";position:absolute;width:138px;height:138px;border-radius:50%;background:#091924}.riskScore strong,.riskScore span{position:relative;z-index:1}.riskScore strong{font-size:42px}.riskScore span{display:block;color:#8ea9ba;font-size:12px}.riskLevel{display:inline-block;padding:7px 13px;border-radius:999px;font-weight:800;background:#143348;color:#6fcfff}
+.recommendations{display:grid;gap:10px}.recommendation{border:1px solid #17394f;background:#0b1e2b;border-radius:10px;padding:13px}.recommendation h4{margin:0 0 5px}.recommendation p{margin:0;color:#91a8b8}.severity{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#f1b94b}
+.docksGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}.dockCard{border:1px solid #17394f;background:#0b1e2b;border-radius:10px;padding:13px}.dockCard strong{font-size:20px}.dockCard p{margin:5px 0;color:#8da5b5}.dock-free{color:#55d59b}.dock-busy{color:#ffbc59}.dock-maint{color:#ff777d}
+@media(max-width:1050px){.analyticsSummary{grid-template-columns:repeat(2,1fr)}.optimizationLayout,.chartGrid{grid-template-columns:1fr}}
+
+@media(max-width:1150px){.metrics{grid-template-columns:repeat(3,1fr)}.inlineForm{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:850px){#app{grid-template-columns:1fr}aside{display:none}.grid,.bottom{grid-template-columns:1fr}.hero{flex-direction:column;align-items:flex-start;padding:25px 10px}.logoBox{width:105px;height:105px;font-size:54px}.inlineForm{grid-template-columns:1fr}}
+@media(max-width:600px){.workspace{padding:14px}.metrics{grid-template-columns:repeat(2,1fr)}.formGrid{grid-template-columns:1fr}.formGrid label{grid-column:1!important}.topbar{align-items:flex-start}.topActions{flex-direction:column;align-items:flex-end}.pageToolbar{align-items:flex-start;flex-direction:column}.alertRow{grid-template-columns:1fr}}
+
+.notificationButton{position:relative;border:1px solid #21445a;background:#0b1e2c;color:#dcebf4;border-radius:10px;padding:10px 13px;font-weight:800}
+.notificationBadge{position:absolute;right:-7px;top:-7px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;display:grid;place-items:center;background:#e54e5c;color:#fff;font-size:11px;border:2px solid #061019}
+.notificationItem{display:grid;grid-template-columns:14px 1fr auto;gap:12px;align-items:start;padding:14px;border-bottom:1px solid #153449}
+.notificationItem.unread{background:#0c2432}
+.notificationDot{width:10px;height:10px;border-radius:50%;background:#47baf4;margin-top:5px}
+.notificationItem.read .notificationDot{background:#415563}
+.notificationItem h4{margin:0 0 5px}.notificationItem p{margin:0;color:#9db4c3}.notificationItem small{display:block;color:#6f8796;margin-top:6px}
+.userTable select{min-width:130px}
+.userStatus{font-weight:800}.userStatus.active{color:#53d69b}.userStatus.disabled{color:#ff7b82}
+.auditDetails{font-family:Consolas,monospace;font-size:11px;color:#89a2b2;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adminTag{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#153b54;color:#68c9fb;font-size:10px}
+
+</style>
+</head>
+<body>
+
+<section id="landing">
+  <div class="hero">
+    <div class="logoBox">⚓</div>
+    <div>
+      <div class="eyebrow">SISTEMA INTELIGENTE DE GESTIÓN PORTUARIA</div>
+      <h1>SMART PORTS</h1>
+      <p class="sub">Control y optimización de operaciones portuarias en un solo lugar.</p>
+      <p class="motto">Puertos más inteligentes, operaciones más eficientes.</p>
+      <button class="primary" id="startBtn">INICIAR SISTEMA</button>
+    </div>
+  </div>
+</section>
+
+<section id="login" class="hidden">
+  <div class="loginCard">
+    <button class="back" id="backBtn">← Volver</button>
+    <div class="loginIcon">⚓</div>
+    <h2>Acceso a Smart Ports</h2>
+    <p>Ingresa al centro de control portuario.</p>
+    <form id="loginForm">
+      <label>Usuario<input id="userInput" value="admin@smartports.com"></label>
+      <label>Contraseña<input id="passInput" type="password" value="1234"></label>
+      <div id="loginError" class="error hidden"></div>
+      <button class="primary" style="margin-top:16px;width:100%">INICIAR SESIÓN</button>
+    </form>
+    <div class="demo"><strong>Demo:</strong> admin@smartports.com / 1234</div>
+  </div>
+</section>
+
+<section id="app" class="hidden">
+  <aside>
+    <div class="brand">⚓ <span>SMART PORTS</span></div>
+    <div class="version">v0.7 · Cloud multiusuario</div>
+    <nav>
+      <button class="active" data-section="dashboard">⌂ Vista general</button>
+      <button data-section="ships">⚓ Buques</button>
+      <button data-section="containers">▣ Contenedores</button>
+      <button data-section="cranes">⌁ Grúas</button>
+      <button data-section="yards">▦ Patios</button>
+      <button data-section="alerts">⚠ Alertas</button>
+      <button data-section="analytics">▥ Analítica</button>
+      <button data-section="reports">▤ Reportes</button>
+      <button data-section="optimization">✦ Optimización</button>
+      <button data-section="notifications">🔔 Notificaciones <span id="sideNotifCount"></span></button>
+      <button class="adminOnly" data-section="users">👥 Usuarios</button>
+      <button class="adminOnly" data-section="audit">⌕ Auditoría</button>
+    </nav>
+    <div class="userBox">
+      <strong id="userName">Administrador</strong>
+      <small id="userRole">Administrador</small>
+      <button id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div><div class="eyebrow">CENTRO DE CONTROL</div><h2 id="pageTitle">Vista general</h2></div>
+      <div class="topActions">
+        <button class="notificationButton" id="notificationButton">🔔<span id="notificationBadge" class="notificationBadge hidden">0</span></button>
+        <span class="live">● Sistema en línea</span>
+        <button class="primary small" id="quickShipBtn">+ Registrar buque</button>
+      </div>
+    </header>
+
+    <div id="connectionError" class="connectionError hidden"></div>
+    <div id="notice" class="notice hidden"></div>
+
+    <section id="dashboardView" class="view">
+      <div class="metrics" id="metrics"></div>
+      <div class="grid">
+        <article class="panel">
+          <div class="panelHeader"><div><div class="eyebrow">OPERACIÓN EN TIEMPO REAL</div><h3>Mapa del puerto</h3></div><span class="live">● Actualizado</span></div>
+          <div class="portMap">
+            <div class="dock d1">A1</div><div class="dock d2">B2</div><div class="dock d3">C1</div>
+            <div class="ship s1">🚢</div><div class="ship s2">🚢</div>
+            <div class="yardMarker">PATIO A<br><strong id="yardA">0%</strong></div>
+            <div class="yardMarker y2">PATIO B<br><strong id="yardB">0%</strong></div>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="eyebrow">AGENDA</div><h3>Próximos arribos</h3>
+          <div class="arrivals" id="arrivals"></div>
+        </article>
+      </div>
+      <div class="bottom">
+        <article class="panel"><div class="eyebrow">MONITOREO</div><h3>Alertas recientes</h3><div id="dashboardAlerts"></div></article>
+        <article class="panel">
+          <div class="eyebrow">RENDIMIENTO</div><h3>Indicadores operativos</h3>
+          <div class="progress">Importación<div class="bar"><i style="width:78%"></i></div></div>
+          <div class="progress">Exportación<div class="bar"><i style="width:62%"></i></div></div>
+          <div class="progress">Disponibilidad de grúas<div class="bar"><i id="craneBar" style="width:0%"></i></div></div>
+          <div class="progress">Eficiencia de patios<div class="bar"><i id="yardBar" style="width:0%"></i></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="shipsView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">TRÁFICO MARÍTIMO</div><h3>Buques registrados</h3></div><button class="primary small" id="newShipBtn">+ Nuevo buque</button></div>
+      <article class="panel"><div class="tableWrap"><table><thead><tr><th>Buque</th><th>ETA</th><th>Muelle</th><th>Estado</th><th>Contenedores</th></tr></thead><tbody id="shipsBody"></tbody></table></div></article>
+    </section>
+
+    <section id="containersView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">CARGA</div><h3>Gestión de contenedores</h3></div><span id="containerCount" class="muted"></span></div>
+      <article class="panel">
+        <form id="containerForm" class="inlineForm">
+          <label>Código<input id="containerCode" required placeholder="Ej. TCNU-009999"></label>
+          <label>Tipo<select id="containerType"><option>Estándar</option><option>Refrigerado</option><option>Peligroso</option><option>Sobredimensionado</option></select></label>
+          <label>Estado<select id="containerStatus"><option>En patio</option><option>En descarga</option><option>En inspección</option><option>Despachado</option></select></label>
+          <label>Buque<select id="containerShip"><option value="">Sin asignar</option></select></label>
+          <button class="primary small formButton">Registrar</button>
+        </form>
+        <div class="tableWrap"><table><thead><tr><th>Código</th><th>Tipo</th><th>Estado</th><th>Buque relacionado</th></tr></thead><tbody id="containersBody"></tbody></table></div>
+      </article>
+    </section>
+
+    <section id="cranesView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">RECURSOS</div><h3>Gestión de grúas</h3></div><span class="muted">Cambios guardados en PostgreSQL</span></div>
+      <div class="cardsGrid" id="cranesGrid"></div>
+    </section>
+
+    <section id="yardsView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">ALMACENAMIENTO</div><h3>Ocupación de patios</h3></div><span class="muted">Actualización manual de ocupación</span></div>
+      <div class="cardsGrid" id="yardsGrid"></div>
+    </section>
+
+    <section id="alertsView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">MONITOREO</div><h3>Alertas operativas</h3></div><span id="activeAlertCount" class="muted"></span></div>
+      <article class="panel">
+        <form id="alertForm" class="inlineForm" style="grid-template-columns:180px 1fr auto">
+          <label>Nivel<select id="alertLevel"><option value="warning">Advertencia</option><option value="danger">Crítica</option><option value="success">Informativa</option></select></label>
+          <label>Mensaje<input id="alertMessage" required placeholder="Describe la situación detectada"></label>
+          <button class="primary small formButton">Crear alerta</button>
+        </form>
+        <div id="alertsList"></div>
+      </article>
+    </section>
+
+    <section id="analyticsView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">INTELIGENCIA DE NEGOCIO</div><h3>Analítica operativa</h3></div><span class="muted">Datos calculados desde PostgreSQL</span></div>
+      <div class="analyticsSummary" id="analyticsSummary"></div>
+      <div class="chartGrid">
+        <article class="panel chartPanel"><div class="eyebrow">BUQUES</div><h3>Distribución por estado</h3><div class="chartBars" id="shipStatusChart"></div></article>
+        <article class="panel chartPanel"><div class="eyebrow">CONTENEDORES</div><h3>Tipos de contenedor</h3><div class="chartBars" id="containerTypesChart"></div></article>
+        <article class="panel chartPanel"><div class="eyebrow">RECURSOS</div><h3>Estado de grúas</h3><div class="chartBars" id="craneStatusChart"></div></article>
+        <article class="panel chartPanel"><div class="eyebrow">PATIOS</div><h3>Nivel de ocupación</h3><div class="chartBars" id="yardAnalyticsChart"></div></article>
+      </div>
+    </section>
+
+    <section id="reportsView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">EXPORTACIÓN</div><h3>Reportes operativos</h3></div><span class="muted">Archivos CSV compatibles con Excel</span></div>
+      <div class="reportGrid">
+        <article class="reportCard"><h4>Buques</h4><p>ETA, muelles, estados y carga estimada de cada buque.</p><button class="primary small" onclick="downloadReport('ships')">Descargar CSV</button></article>
+        <article class="reportCard"><h4>Contenedores</h4><p>Códigos, tipos, estados y relación con buques.</p><button class="primary small" onclick="downloadReport('containers')">Descargar CSV</button></article>
+        <article class="reportCard"><h4>Grúas</h4><p>Inventario de grúas y estado operativo actual.</p><button class="primary small" onclick="downloadReport('cranes')">Descargar CSV</button></article>
+        <article class="reportCard"><h4>Patios</h4><p>Capacidad, ocupación y porcentaje utilizado.</p><button class="primary small" onclick="downloadReport('yards')">Descargar CSV</button></article>
+        <article class="reportCard"><h4>Alertas</h4><p>Historial de alertas activas y resueltas.</p><button class="primary small" onclick="downloadReport('alerts')">Descargar CSV</button></article>
+      </div>
+    </section>
+
+    <section id="optimizationView" class="view hidden">
+      <div class="pageToolbar"><div><div class="eyebrow">OPTIMIZACIÓN</div><h3>Motor de apoyo operativo</h3></div><button class="primary small" id="runOptimizationBtn">✦ Ejecutar optimización</button></div>
+      <div class="optimizationLayout">
+        <article class="panel riskCard"><div class="eyebrow">RIESGO DE CONGESTIÓN</div><div class="riskScore" id="riskScore"><div><strong id="riskNumber">0</strong><span>/ 100</span></div></div><div class="riskLevel" id="riskLevel">Calculando</div><p class="muted" id="riskDetail"></p></article>
+        <article class="panel"><div class="eyebrow">RECOMENDACIONES</div><h3>Acciones sugeridas</h3><div class="recommendations" id="recommendations"></div></article>
+      </div>
+      <article class="panel" style="margin-top:14px"><div class="panelHeader"><div><div class="eyebrow">MUELLES</div><h3>Disponibilidad y asignaciones</h3></div><span class="muted">La optimización puede reorganizar buques en espera</span></div><div class="docksGrid" id="docksGrid"></div></article>
+    </section>
+
+    <section id="notificationsView" class="view hidden">
+      <div class="pageToolbar">
+        <div><div class="eyebrow">CENTRO DE AVISOS</div><h3>Notificaciones</h3></div>
+        <button class="ghost" id="readAllNotificationsBtn">Marcar todas como leídas</button>
+      </div>
+      <article class="panel" id="notificationsList"></article>
+    </section>
+
+    <section id="usersView" class="view hidden">
+      <div class="pageToolbar">
+        <div><div class="eyebrow">SEGURIDAD</div><h3>Usuarios y roles</h3></div>
+        <span class="muted">Solo administradores</span>
+      </div>
+      <article class="panel">
+        <form id="userForm" class="inlineForm" style="grid-template-columns:1fr 1fr 1fr 180px auto">
+          <label>Nombre<input id="newUserName" required placeholder="Nombre completo"></label>
+          <label>Correo<input id="newUserEmail" type="email" required placeholder="usuario@correo.com"></label>
+          <label>Contraseña<input id="newUserPassword" type="password" required minlength="4" placeholder="Mínimo 4 caracteres"></label>
+          <label>Rol<select id="newUserRole"><option>Operador</option><option>Administrador</option></select></label>
+          <button class="primary small formButton">Crear usuario</button>
+        </form>
+        <div class="tableWrap">
+          <table class="userTable">
+            <thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="auditView" class="view hidden">
+      <div class="pageToolbar">
+        <div><div class="eyebrow">TRAZABILIDAD</div><h3>Historial de auditoría</h3></div>
+        <button class="ghost" id="refreshAuditBtn">Actualizar</button>
+      </div>
+      <article class="panel">
+        <div class="tableWrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Detalles</th></tr></thead>
+            <tbody id="auditBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+  </main>
+</section>
+
+<section id="modal" class="hidden">
+  <div class="modalCard">
+    <div class="modalHead"><div><div class="eyebrow">TRÁFICO MARÍTIMO</div><h3>Registrar nuevo buque</h3></div><button class="close" id="closeModal">×</button></div>
+    <form id="shipForm" class="formGrid">
+      <label>Nombre del buque<input id="shipName" required placeholder="Ej. MSC Aurora"></label>
+      <label>ETA<input id="shipEta" required type="time"></label>
+      <label>Muelle<select id="shipDock"><option value="AUTO">AUTO · asignar automáticamente</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>B1</option><option>B2</option><option>B3</option><option>B4</option><option>C1</option><option>C2</option><option>C3</option></select></label>
+      <label>Estado<select id="shipStatus"><option>Nuevo arribo</option><option>En tránsito</option><option>En puerto</option><option>Esperando</option><option>Descargando</option></select></label>
+      <label>Contenedores estimados<input id="shipContainers" type="number" min="0" value="300"></label>
+      <div class="actions"><button type="button" class="ghost" id="cancelModal">Cancelar</button><button class="primary">Registrar buque</button></div>
+    </form>
+  </div>
+</section>
+
+<script>
+const API="/api";
+let token=localStorage.getItem("smartPortsToken")||"";
+let currentUser=JSON.parse(localStorage.getItem("smartPortsUser")||"null");
+let ships=[],containers=[],cranes=[],yards=[],alerts=[],docks=[],users=[],auditLogs=[],notifications=[],dashboard=null,analytics=null,optimization=null;
+const $=id=>document.getElementById(id);
+const show=id=>$(id).classList.remove("hidden");
+const hide=id=>$(id).classList.add("hidden");
+
+async function api(path,options={}){
+  const headers={"Content-Type":"application/json",...(options.headers||{})};
+  if(token) headers.Authorization=`Bearer ${token}`;
+  const response=await fetch(`${API}${path}`,{...options,headers});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok) throw new Error(data.error||"Error de conexión con el servidor.");
+  return data;
+}
+
+$("startBtn").onclick=()=>{hide("landing");show("login")};
+$("backBtn").onclick=()=>{hide("login");show("landing")};
+$("logoutBtn").onclick=()=>{
+  token="";currentUser=null;
+  localStorage.removeItem("smartPortsToken");localStorage.removeItem("smartPortsUser");
+  hide("app");show("login");
+};
+["quickShipBtn","newShipBtn"].forEach(id=>$(id).onclick=()=>show("modal"));
+$("closeModal").onclick=$("cancelModal").onclick=()=>hide("modal");
+$("modal").addEventListener("click",e=>{if(e.target.id==="modal")hide("modal")});
+
+$("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();hide("loginError");
+  try{
+    const result=await api("/auth/login",{method:"POST",body:JSON.stringify({email:$("userInput").value.trim(),password:$("passInput").value})});
+    token=result.token;currentUser=result.user;
+    localStorage.setItem("smartPortsToken",token);localStorage.setItem("smartPortsUser",JSON.stringify(currentUser));
+    hide("login");show("app");applyUser();await loadAll();
+  }catch(error){$("loginError").textContent=error.message+" Verifica que el backend esté encendido.";show("loginError")}
+});
+
+document.querySelectorAll("nav button[data-section]").forEach(btn=>{
+  btn.addEventListener("click",async()=>{
+    document.querySelectorAll("nav button[data-section]").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
+    const section=btn.dataset.section;
+    $(`${section}View`).classList.remove("hidden");
+    const titles={
+      dashboard:"Vista general",ships:"Gestión de buques",containers:"Contenedores",cranes:"Grúas",
+      yards:"Patios",alerts:"Alertas",analytics:"Analítica",reports:"Reportes",optimization:"Optimización",
+      notifications:"Notificaciones",users:"Usuarios y roles",audit:"Auditoría"
+    };
+    $("pageTitle").textContent=titles[section]||"Smart Ports";
+    try{
+      if(section==="dashboard")await loadDashboard();
+      if(section==="ships")await loadShips();
+      if(section==="containers")await loadContainers();
+      if(section==="cranes")await loadCranes();
+      if(section==="yards")await loadYards();
+      if(section==="alerts")await loadAlerts();
+      if(section==="analytics")await loadAnalytics();
+      if(section==="optimization")await Promise.all([loadOptimization(),loadDocks()]);
+      if(section==="notifications")await loadNotifications();
+      if(section==="users")await loadUsers();
+      if(section==="audit")await loadAudit();
+    }catch(error){showConnectionError(error.message)}
+  });
+});
+
+$("shipForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  try{
+    const result=await api("/ships",{method:"POST",body:JSON.stringify({
+      name:$("shipName").value.trim(),eta:$("shipEta").value,dock:$("shipDock").value,
+      status:$("shipStatus").value,containers:Number($("shipContainers").value)||0
+    })});
+    hide("modal");$("shipForm").reset();$("shipContainers").value=300;
+    notify(result.autoAssigned?`Buque registrado y asignado automáticamente al muelle ${result.dock}.`:"Buque registrado correctamente en PostgreSQL.");
+    await loadAll();
+  }catch(error){showConnectionError(error.message)}
+});
+
+$("containerForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  try{
+    await api("/containers",{method:"POST",body:JSON.stringify({
+      code:$("containerCode").value.trim(),type:$("containerType").value,status:$("containerStatus").value,
+      shipId:$("containerShip").value||null
+    })});
+    $("containerCode").value="";notify("Contenedor registrado correctamente.");
+    await Promise.all([loadContainers(),loadDashboard()]);
+  }catch(error){showConnectionError(error.message)}
+});
+
+$("alertForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  try{
+    await api("/alerts",{method:"POST",body:JSON.stringify({level:$("alertLevel").value,message:$("alertMessage").value.trim()})});
+    $("alertMessage").value="";notify("Alerta creada correctamente.");
+    await Promise.all([loadAlerts(),loadDashboard()]);
+  }catch(error){showConnectionError(error.message)}
+});
+
+
+$("notificationButton").addEventListener("click",async()=>{
+  openSection("notifications");
+  try{await loadNotifications()}catch(error){showConnectionError(error.message)}
+});
+
+$("readAllNotificationsBtn").addEventListener("click",async()=>{
+  try{
+    await api("/notifications/read-all",{method:"PATCH"});
+    await loadNotifications();
+    notify("Notificaciones marcadas como leídas.");
+  }catch(error){showConnectionError(error.message)}
+});
+
+$("refreshAuditBtn").addEventListener("click",async()=>{
+  try{await loadAudit();notify("Historial actualizado.")}catch(error){showConnectionError(error.message)}
+});
+
+$("userForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  try{
+    await api("/users",{method:"POST",body:JSON.stringify({
+      name:$("newUserName").value.trim(),
+      email:$("newUserEmail").value.trim(),
+      password:$("newUserPassword").value,
+      role:$("newUserRole").value
+    })});
+    e.target.reset();
+    notify("Usuario creado correctamente.");
+    await Promise.all([loadUsers(),loadAudit(),loadNotifications()]);
+  }catch(error){showConnectionError(error.message)}
+});
+
+function openSection(section){
+  document.querySelectorAll("nav button[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===section));
+  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
+  const view=$(`${section}View`);
+  if(view)view.classList.remove("hidden");
+  const titles={
+    dashboard:"Vista general",ships:"Gestión de buques",containers:"Contenedores",cranes:"Grúas",
+    yards:"Patios",alerts:"Alertas",analytics:"Analítica",reports:"Reportes",optimization:"Optimización",
+    notifications:"Notificaciones",users:"Usuarios y roles",audit:"Auditoría"
+  };
+  $("pageTitle").textContent=titles[section]||"Smart Ports";
+}
+
+function applyUser(){
+  $("userName").textContent=currentUser?.name||"Usuario";
+  $("userRole").textContent=currentUser?.role||"";
+  document.querySelectorAll(".adminOnly").forEach(el=>{
+    el.classList.toggle("hidden", currentUser?.role!=="Administrador");
+  });
+}
+
+async function loadAll(){
+  const jobs=[loadDashboard(),loadShips(),loadContainers(),loadCranes(),loadYards(),loadAlerts(),loadDocks(),loadAnalytics(),loadOptimization(),loadNotifications()];
+  if(currentUser?.role==="Administrador") jobs.push(loadUsers(),loadAudit());
+  await Promise.all(jobs);
+  hide("connectionError");
+}
+
+async function loadDashboard(){dashboard=await api("/dashboard");renderDashboard()}
+async function loadShips(){ships=await api("/ships");renderShips();renderShipOptions()}
+async function loadContainers(){containers=await api("/containers");renderContainers()}
+async function loadCranes(){cranes=await api("/cranes");renderCranes()}
+async function loadYards(){yards=await api("/yards");renderYards()}
+async function loadAlerts(){alerts=await api("/alerts");renderAlerts()}
+async function loadDocks(){docks=await api("/docks");renderDocks()}
+async function loadAnalytics(){analytics=await api("/analytics");renderAnalytics()}
+async function loadOptimization(){optimization=await api("/optimization");renderOptimization()}
+async function loadUsers(){users=await api("/users");renderUsers()}
+async function loadAudit(){auditLogs=await api("/audit?limit=150");renderAudit()}
+async function loadNotifications(){
+  const result=await api("/notifications");
+  notifications=result.items||[];
+  renderNotifications(result.unread||0);
+}
+
+function notify(message){$("notice").textContent=message;show("notice");setTimeout(()=>hide("notice"),3200)}
+function showConnectionError(message){$("connectionError").textContent=`No se pudo completar la operación: ${message}`;show("connectionError")}
+
+function renderDashboard(){
+  if(!dashboard)return;
+  const m=dashboard.metrics;
+  const metrics=[
+    ["Buques en puerto",m.shipsInPort,"Datos PostgreSQL"],
+    ["Carga estimada",Number(m.containers).toLocaleString("en-US"),"Contenedores en buques"],
+    ["Grúas activas",m.activeCranes,"Recursos disponibles"],
+    ["Movimientos hoy",m.movementsToday,"Actividad diaria"],
+    ["Tiempo prom. despacho",`${m.averageDispatchHours} h`,"Promedio"],
+    ["Ocupación patios",`${m.yardOccupancy}%`,"Promedio actual"]
+  ];
+  $("metrics").innerHTML=metrics.map(x=>`<article class="card"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join("");
+  $("arrivals").innerHTML=dashboard.arrivals.map(s=>`<div class="arrival"><div><strong>${esc(s.name)}</strong><small>${esc(s.status)}</small></div><div class="arrivalMeta"><strong>${esc(s.eta)}</strong><span>${esc(s.dock)}</span></div></div>`).join("");
+  $("dashboardAlerts").innerHTML=dashboard.alerts.length?dashboard.alerts.map(a=>alertHtml(a,false)).join(""):`<div class="empty">No hay alertas activas.</div>`;
+  if(dashboard.yards[0])$("yardA").textContent=`${dashboard.yards[0].percentage}%`;
+  if(dashboard.yards[1])$("yardB").textContent=`${dashboard.yards[1].percentage}%`;
+  $("yardBar").style.width=`${m.yardOccupancy}%`;
+  const totalCranes=Math.max(cranes.length,22);
+  $("craneBar").style.width=`${Math.round((m.activeCranes/totalCranes)*100)}%`;
+}
+
+function renderShips(){
+  $("shipsBody").innerHTML=ships.length?ships.map(s=>`<tr><td><strong>${esc(s.name)}</strong></td><td>${esc(s.eta)}</td><td><span class="badge">${esc(s.dock)}</span></td><td>${esc(s.status)}</td><td>${Number(s.containers).toLocaleString("en-US")}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">No hay buques registrados.</td></tr>`;
+}
+function renderShipOptions(){
+  const current=$("containerShip").value;
+  $("containerShip").innerHTML=`<option value="">Sin asignar</option>`+ships.map(s=>`<option value="${s.id}">${esc(s.name)} · ${esc(s.dock)}</option>`).join("");
+  if([...$("containerShip").options].some(o=>o.value===current))$("containerShip").value=current;
+}
+
+function renderContainers(){
+  $("containerCount").textContent=`${containers.length} contenedores registrados`;
+  $("containersBody").innerHTML=containers.length?containers.map(c=>`<tr><td><strong>${esc(c.code)}</strong></td><td>${esc(c.type)}</td><td><span class="badge">${esc(c.status)}</span></td><td>${esc(c.ship_name||"Sin asignar")}</td></tr>`).join(""):`<tr><td colspan="4" class="empty">No hay contenedores registrados.</td></tr>`;
+}
+
+function renderCranes(){
+  $("cranesGrid").innerHTML=cranes.map(c=>{
+    const active=c.status==="Activa";
+    return `<article class="resourceCard"><h4>${esc(c.code)}</h4><p>Estado operativo</p><div class="row"><span class="badge ${active?"status-active":"status-maint"}">${esc(c.status)}</span><button class="ghost" onclick="toggleCrane(${c.id},'${active?"Mantenimiento":"Activa"}')">${active?"Enviar a mantenimiento":"Activar"}</button></div></article>`;
+  }).join("");
+}
+
+async function toggleCrane(id,status){
+  try{
+    await api(`/cranes/${id}/status`,{method:"PATCH",body:JSON.stringify({status})});
+    notify(`Estado de grúa actualizado a ${status}.`);
+    await Promise.all([loadCranes(),loadDashboard()]);
+  }catch(error){showConnectionError(error.message)}
+}
+window.toggleCrane=toggleCrane;
+
+function renderYards(){
+  $("yardsGrid").innerHTML=yards.map(y=>`
+    <article class="resourceCard">
+      <h4>${esc(y.name)}</h4>
+      <p>Capacidad: ${Number(y.capacity).toLocaleString("en-US")} TEU</p>
+      <p>Ocupación: ${Number(y.occupied).toLocaleString("en-US")} TEU</p>
+      <div class="yardBar"><i style="width:${y.percentage}%"></i></div>
+      <div class="row"><strong>${y.percentage}%</strong><button class="ghost" onclick="editYard(${y.id},${y.occupied},${y.capacity})">Actualizar ocupación</button></div>
+    </article>`).join("");
+}
+
+async function editYard(id,current,capacity){
+  const value=prompt(`Nueva ocupación del patio (0 a ${capacity} TEU):`,String(current));
+  if(value===null)return;
+  const occupied=Number(value);
+  if(!Number.isFinite(occupied)){alert("Ingresa un número válido.");return}
+  try{
+    await api(`/yards/${id}`,{method:"PATCH",body:JSON.stringify({occupied})});
+    notify("Ocupación del patio actualizada.");
+    await Promise.all([loadYards(),loadDashboard()]);
+  }catch(error){showConnectionError(error.message)}
+}
+window.editYard=editYard;
+
+function alertHtml(a,withAction=true){
+  const icon=a.level==="warning"?"⚠":a.level==="danger"?"●":"✓";
+  if(!withAction)return `<div class="alert ${esc(a.level)}">${icon} ${esc(a.message)}</div>`;
+  return `<div class="alertRow"><span class="badge ${a.active?"":"status-active"}">${a.active?"Activa":"Resuelta"}</span><div><strong>${icon} ${esc(a.message)}</strong><div class="muted">${esc(a.level)}</div></div>${a.active?`<button class="ghost" onclick="resolveAlert(${a.id})">Resolver</button>`:`<span class="muted">Completada</span>`}</div>`;
+}
+
+function renderAlerts(){
+  const active=alerts.filter(a=>a.active).length;
+  $("activeAlertCount").textContent=`${active} alertas activas`;
+  $("alertsList").innerHTML=alerts.length?alerts.map(a=>alertHtml(a,true)).join(""):`<div class="empty">No hay alertas registradas.</div>`;
+}
+
+async function resolveAlert(id){
+  try{
+    await api(`/alerts/${id}/resolve`,{method:"PATCH"});
+    notify("Alerta marcada como resuelta.");
+    await Promise.all([loadAlerts(),loadDashboard()]);
+  }catch(error){showConnectionError(error.message)}
+}
+window.resolveAlert=resolveAlert;
+
+
+function renderBarChart(id,items,percentMode=false){
+  const el=$(id);if(!el)return;
+  if(!items?.length){el.innerHTML=`<div class="empty">No hay datos suficientes.</div>`;return}
+  const max=Math.max(...items.map(x=>Number(percentMode?100:x.value)||0),1);
+  el.innerHTML=items.map(x=>{
+    const value=Number(percentMode?x.percentage:x.value)||0;
+    const width=percentMode?Math.min(value,100):Math.round((value/max)*100);
+    return `<div class="chartRow"><span class="chartLabel" title="${esc(x.label??x.name)}">${esc(x.label??x.name)}</span><div class="chartTrack"><i style="width:${width}%"></i></div><span class="chartValue">${value}${percentMode?"%":""}</span></div>`;
+  }).join("");
+}
+
+function renderAnalytics(){
+  if(!analytics)return;
+  const s=analytics.summary;
+  const cards=[
+    ["Buques registrados",s.totalShips,"Base operativa"],
+    ["Contenedores registrados",s.containerRecords,"Inventario digital"],
+    ["Alertas activas",s.activeAlerts,"Requieren seguimiento"],
+    ["Ocupación promedio",`${s.averageYardOccupancy}%`,"Patios"]
+  ];
+  $("analyticsSummary").innerHTML=cards.map(x=>`<article class="card"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join("");
+  renderBarChart("shipStatusChart",analytics.shipStatus);
+  renderBarChart("containerTypesChart",analytics.containerTypes);
+  renderBarChart("craneStatusChart",analytics.craneStatus);
+  renderBarChart("yardAnalyticsChart",analytics.yards,true);
+}
+
+function renderDocks(){
+  const el=$("docksGrid");if(!el)return;
+  el.innerHTML=docks.length?docks.map(d=>{
+    const cls=d.status==="Disponible"?"dock-free":d.status==="Ocupado"?"dock-busy":"dock-maint";
+    return `<article class="dockCard"><strong>${esc(d.code)}</strong><p class="${cls}">${esc(d.status)}</p><p>Capacidad: ${Number(d.max_containers).toLocaleString("en-US")} cont.</p>${d.ship_name?`<p>Buque: ${esc(d.ship_name)}</p>`:""}</article>`;
+  }).join(""):`<div class="empty">No hay muelles configurados.</div>`;
+}
+
+function renderOptimization(){
+  if(!optimization)return;
+  $("riskNumber").textContent=optimization.score;
+  $("riskLevel").textContent=`Riesgo ${optimization.level}`;
+  $("riskScore").style.setProperty("--risk",`${optimization.score}%`);
+  $("riskDetail").textContent=`${optimization.waitingShips.length} buques en espera/tránsito · ${optimization.cranePercent}% de grúas activas · ${optimization.highYards.length} patios sobre 80%.`;
+  $("recommendations").innerHTML=optimization.recommendations.map(r=>`<div class="recommendation"><div class="severity">Prioridad ${esc(r.severity)}</div><h4>${esc(r.title)}</h4><p>${esc(r.detail)}</p></div>`).join("");
+}
+
+async function runOptimization(){
+  try{
+    const result=await api("/optimization/assign-docks",{method:"POST"});
+    const count=result.assignments?.length||0;
+    notify(count?`Optimización completada: ${count} asignaciones de muelle actualizadas.`:"Optimización ejecutada. No fue necesario cambiar asignaciones.");
+    await Promise.all([loadShips(),loadDashboard(),loadDocks(),loadOptimization(),loadAlerts(),loadAnalytics()]);
+  }catch(error){showConnectionError(error.message)}
+}
+window.runOptimization=runOptimization;
+$("runOptimizationBtn").addEventListener("click",runOptimization);
+
+async function downloadReport(type){
+  try{
+    const response=await fetch(`${API}/reports/${type}.csv`,{headers:{Authorization:`Bearer ${token}`}});
+    if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||"No fue posible descargar el reporte.")}
+    const blob=await response.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=`smart-ports-${type}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }catch(error){showConnectionError(error.message)}
+}
+window.downloadReport=downloadReport;
+
+
+function renderUsers(){
+  if(currentUser?.role!=="Administrador")return;
+  $("usersBody").innerHTML=users.length?users.map(u=>`
+    <tr>
+      <td><strong>${esc(u.name)}</strong>${u.id===currentUser.id?`<span class="adminTag">Tú</span>`:""}</td>
+      <td>${esc(u.email)}</td>
+      <td>
+        <select onchange="changeUserRole(${u.id},this.value)" ${u.id===currentUser.id?"disabled":""}>
+          <option ${u.role==="Operador"?"selected":""}>Operador</option>
+          <option ${u.role==="Administrador"?"selected":""}>Administrador</option>
+        </select>
+      </td>
+      <td><span class="userStatus ${u.active?"active":"disabled"}">${u.active?"Activo":"Desactivado"}</span></td>
+      <td>
+        <button class="ghost" onclick="toggleUserActive(${u.id},${!u.active})" ${u.id===currentUser.id?"disabled":""}>
+          ${u.active?"Desactivar":"Activar"}
+        </button>
+      </td>
+    </tr>`).join(""):`<tr><td colspan="5" class="empty">No hay usuarios registrados.</td></tr>`;
+}
+
+async function changeUserRole(id,role){
+  try{
+    await api(`/users/${id}`,{method:"PATCH",body:JSON.stringify({role})});
+    notify("Rol actualizado.");
+    await Promise.all([loadUsers(),loadAudit(),loadNotifications()]);
+  }catch(error){showConnectionError(error.message);await loadUsers()}
+}
+window.changeUserRole=changeUserRole;
+
+async function toggleUserActive(id,active){
+  try{
+    await api(`/users/${id}`,{method:"PATCH",body:JSON.stringify({active})});
+    notify(active?"Usuario activado.":"Usuario desactivado.");
+    await Promise.all([loadUsers(),loadAudit(),loadNotifications()]);
+  }catch(error){showConnectionError(error.message)}
+}
+window.toggleUserActive=toggleUserActive;
+
+function renderAudit(){
+  if(currentUser?.role!=="Administrador")return;
+  $("auditBody").innerHTML=auditLogs.length?auditLogs.map(a=>`
+    <tr>
+      <td>${formatDate(a.created_at)}</td>
+      <td>${esc(a.user_name||"Sistema")}</td>
+      <td><strong>${esc(a.action)}</strong></td>
+      <td>${esc(a.entity_type)}</td>
+      <td><div class="auditDetails" title="${esc(JSON.stringify(a.details||{}))}">${esc(JSON.stringify(a.details||{}))}</div></td>
+    </tr>`).join(""):`<tr><td colspan="5" class="empty">No hay eventos de auditoría.</td></tr>`;
+}
+
+function renderNotifications(unread=0){
+  const badge=$("notificationBadge");
+  if(unread>0){
+    badge.textContent=unread>99?"99+":String(unread);
+    badge.classList.remove("hidden");
+    $("sideNotifCount").textContent=`(${unread})`;
+  }else{
+    badge.classList.add("hidden");
+    $("sideNotifCount").textContent="";
+  }
+
+  $("notificationsList").innerHTML=notifications.length?notifications.map(n=>`
+    <div class="notificationItem ${n.is_read?"read":"unread"}">
+      <span class="notificationDot"></span>
+      <div>
+        <h4>${esc(n.title)}</h4>
+        <p>${esc(n.message)}</p>
+        <small>${formatDate(n.created_at)} · ${esc(n.level)}</small>
+      </div>
+      ${n.is_read?`<span class="muted">Leída</span>`:`<button class="ghost" onclick="readNotification(${n.id})">Marcar leída</button>`}
+    </div>`).join(""):`<div class="empty">No hay notificaciones.</div>`;
+}
+
+async function readNotification(id){
+  try{
+    await api(`/notifications/${id}/read`,{method:"PATCH"});
+    await loadNotifications();
+  }catch(error){showConnectionError(error.message)}
+}
+window.readNotification=readNotification;
+
+function formatDate(value){
+  if(!value)return "";
+  const date=new Date(value);
+  return Number.isNaN(date.getTime())?String(value):date.toLocaleString("es-CO");
+}
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+if(token&&currentUser){hide("landing");hide("login");show("app");applyUser();loadAll().catch(e=>showConnectionError(e.message))}
+setInterval(()=>{if(token)loadNotifications().catch(()=>{})},8000);
+</script>
+</body>
+</html>

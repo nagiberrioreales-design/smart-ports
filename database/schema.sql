@@ -1,0 +1,87 @@
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role VARCHAR(30) NOT NULL DEFAULT 'Operador',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ships (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    eta VARCHAR(10) NOT NULL,
+    dock VARCHAR(20) NOT NULL,
+    status VARCHAR(40) NOT NULL,
+    containers INTEGER NOT NULL DEFAULT 0 CHECK (containers >= 0),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS containers (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(30) UNIQUE NOT NULL,
+    type VARCHAR(40) NOT NULL DEFAULT 'Estándar',
+    status VARCHAR(40) NOT NULL DEFAULT 'En patio',
+    ship_id INTEGER REFERENCES ships(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cranes (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(30) UNIQUE NOT NULL,
+    status VARCHAR(40) NOT NULL DEFAULT 'Activa'
+);
+
+CREATE TABLE IF NOT EXISTS yards (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
+    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    occupied INTEGER NOT NULL DEFAULT 0 CHECK (occupied >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS alerts (
+    id SERIAL PRIMARY KEY,
+    level VARCHAR(20) NOT NULL,
+    message TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS docks (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(20) UNIQUE NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'Disponible',
+    max_containers INTEGER NOT NULL DEFAULT 1500 CHECK (max_containers > 0),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Smart Ports v0.6
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(80) NOT NULL,
+    entity_type VARCHAR(80) NOT NULL,
+    entity_id VARCHAR(80),
+    details JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGSERIAL PRIMARY KEY,
+    level VARCHAR(20) NOT NULL DEFAULT 'info',
+    title VARCHAR(120) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at
+ON audit_logs(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_read_created
+ON notifications(is_read, created_at DESC);

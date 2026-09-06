@@ -1,0 +1,143 @@
+SMART PORTS v0.7 - CLOUD MULTIUSUARIO
+=====================================
+
+OBJETIVO
+Todos los integrantes entrarán a una misma URL y trabajarán sobre:
+1. El mismo backend Node.js.
+2. La misma base PostgreSQL en la nube.
+3. Los mismos buques, contenedores, grúas, patios, usuarios, alertas,
+   auditoría y notificaciones.
+
+ARQUITECTURA
+Usuario (PC/celular)
+        |
+        v
+URL pública de Smart Ports
+        |
+        v
+Node.js + Express en Render
+        |
+        v
+PostgreSQL Cloud (por ejemplo Supabase)
+
+El navegador NO se conecta directamente a PostgreSQL.
+
+------------------------------------------------------------
+PARTE A - CREAR POSTGRESQL EN LA NUBE
+------------------------------------------------------------
+
+Opción recomendada para este proyecto: Supabase.
+
+1. Crea un proyecto en Supabase.
+2. Guarda la contraseña de la base.
+3. En el proyecto busca la sección "Connect".
+4. Copia una cadena de conexión PostgreSQL compatible con aplicaciones
+   persistentes. Si el proveedor ofrece "Session pooler", es una buena
+   opción cuando necesitas compatibilidad IPv4.
+5. La cadena tendrá una forma parecida a:
+
+   postgresql://usuario:clave@host:5432/postgres
+
+NO publiques esa cadena ni la subas a GitHub.
+
+------------------------------------------------------------
+PARTE B - PROBAR LA BASE CLOUD EN TU PC
+------------------------------------------------------------
+
+1. Dentro de backend copia:
+      .env.cloud.example
+   como:
+      .env
+
+2. Completa:
+      DATABASE_URL=...
+      JWT_SECRET=...
+      INITIAL_ADMIN_PASSWORD=...
+
+3. Desde la carpeta backend ejecuta:
+      npm install
+      npm run test:cloud
+      npm run setup:cloud
+      npm start
+
+4. Abre:
+      http://localhost:3000/api/health
+
+Debe indicar:
+      "ok": true
+      "database": "cloud"
+
+En ese momento tu PC ya está usando PostgreSQL Cloud.
+
+------------------------------------------------------------
+PARTE C - MIGRAR TUS DATOS LOCALES ACTUALES (OPCIONAL)
+------------------------------------------------------------
+
+Solo es necesario si quieres conservar exactamente lo que ya tienes
+guardado en tu PostgreSQL local.
+
+1. Ejecuta:
+      MIGRAR-DATOS-LOCALES-A-CLOUD.bat
+
+2. La primera vez abrirá:
+      backend\.env.migration
+
+3. Completa la contraseña LOCAL y DATABASE_URL CLOUD.
+
+4. Cuando estés seguro cambia:
+      CONFIRM_REPLACE_CLOUD=NO
+   por:
+      CONFIRM_REPLACE_CLOUD=SI
+
+IMPORTANTE:
+Este proceso reemplaza los datos que ya existan en la base CLOUD.
+Úsalo solamente durante la migración inicial.
+
+------------------------------------------------------------
+PARTE D - PUBLICAR SMART PORTS EN RENDER
+------------------------------------------------------------
+
+El proyecto incluye:
+      render.yaml
+
+Necesitas subir esta carpeta a un repositorio Git (GitHub, por ejemplo).
+
+En Render:
+1. Crea un Web Service desde el repositorio o usa el Blueprint render.yaml.
+2. Configura estas variables secretas:
+      DATABASE_URL
+      INITIAL_ADMIN_PASSWORD
+
+3. Render puede generar JWT_SECRET automáticamente si usas render.yaml.
+4. DB_SSL debe quedar en true.
+5. El health check es:
+      /api/health
+
+Cuando termine el despliegue recibirás una URL similar a:
+      https://smart-ports-xxxx.onrender.com
+
+Esa será la URL que compartirás con los usuarios autorizados.
+
+------------------------------------------------------------
+PRUEBA MULTIUSUARIO
+------------------------------------------------------------
+
+1. Abre la URL pública en tu computador.
+2. Abre la misma URL en otro PC o celular.
+3. Inicia sesión en ambos.
+4. Registra un buque en el primer dispositivo.
+5. Actualiza el segundo dispositivo.
+6. El buque debe aparecer también allí.
+
+Eso confirma que ambos están usando la misma base de datos.
+
+------------------------------------------------------------
+SEGURIDAD
+------------------------------------------------------------
+
+- Nunca compartas DATABASE_URL.
+- Nunca subas backend/.env a un repositorio.
+- Cambia la contraseña inicial admin/1234 para producción.
+- Usa cuentas individuales para cada integrante.
+- Los usuarios finales solo deben conocer la URL de Smart Ports y sus
+  credenciales, nunca las credenciales PostgreSQL.
