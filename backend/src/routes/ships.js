@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { validateShipArrival } from "../domain/ship-arrival.js";
 
 const router = Router();
 
@@ -38,10 +39,16 @@ async function assignFreeDock(client, containers = 0) {
 router.post("/", requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {
-    const { name, eta, dock, status, containers = 0 } = req.body || {};
-    if (!name || !eta || !dock || !status) {
-      return res.status(400).json({ error: "Nombre, ETA, muelle y estado son obligatorios." });
+    const validation = validateShipArrival(req.body || {});
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: "Faltan campos obligatorios.",
+        fields: validation.missingFields
+      });
     }
+
+    const { name, eta, dock, status, containers } = validation.data;
 
     await client.query("BEGIN");
     let selectedDock = dock;
@@ -60,13 +67,13 @@ router.post("/", requireAuth, async (req, res) => {
       `INSERT INTO ships (name, eta, dock, status, containers)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, name, eta, dock, status, containers, created_at`,
-      [name.trim(), eta, selectedDock, status, Number(containers) || 0]
+      [name, eta, selectedDock, status, containers]
     );
 
     if (autoAssigned) {
       await client.query(
         `INSERT INTO alerts (level,message,active) VALUES ('success',$1,TRUE)`,
-        [`${name.trim()} fue asignado automáticamente al muelle ${selectedDock}.`]
+        [`${name} fue asignado automáticamente al muelle ${selectedDock}.`]
       );
     }
 
