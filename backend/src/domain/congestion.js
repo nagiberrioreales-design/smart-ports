@@ -1,9 +1,13 @@
 const ZONE_PATTERN = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .-]{2,60}$/;
+export const DEFAULT_CONGESTION_THRESHOLD = 80;
 
 export function evaluateCongestion(input = {}) {
   const zone = typeof input.zone === "string" ? input.zone.trim() : "";
   const currentLevel = Number(input.currentLevel);
-  const threshold = input.threshold === undefined ? 80 : Number(input.threshold);
+  const threshold =
+    input.threshold === undefined
+      ? DEFAULT_CONGESTION_THRESHOLD
+      : Number(input.threshold);
 
   const errors = [];
 
