@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "test": "node --test test/*.test.js",
     "setup": "node src/setup-db.js",
     "setup:cloud": "node src/setup-db.js",
     "test:cloud": "node src/test-cloud.js",
